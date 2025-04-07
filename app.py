@@ -38,7 +38,8 @@ st.set_page_config(layout="wide")
 # -------------------------
 @st.cache_data
 def load_excel_data():
-    file_path = 'https://nhs-my.sharepoint.com/personal/jonathan_white26_nhs_net/_layouts/15/download.aspx?SourceUrl=https://nhs-my.sharepoint.com/:x:/g/personal/jonathan_white26_nhs_net/EX07mIrBOk1AhamM_x4K5xQBVVwr-K3W4LgHagTqqHgeHg?e=g72qEc'
+    file_path = 'https://nhs-my.sharepoint.com/:x:/g/personal/jonathan_white26_nhs_net/EX07mIrBOk1AhamM_x4K5xQBjo-D43tUJQ7f0pQWRkQKEw?e=SXQade'
+
     xls = pd.ExcelFile(file_path)
 
     df = xls.parse('DailyInput')
@@ -63,7 +64,8 @@ def load_excel_data():
 @st.cache_data
 def load_plan_data():
     import os
-    file_path = 'https://nhs-my.sharepoint.com/personal/jonathan_white26_nhs_net/_layouts/15/download.aspx?SourceUrl=https://nhs-my.sharepoint.com/personal/jonathan_white26_nhs_net/Documents/AmbHandPlan.csv'
+    file_path = 'https://nhs-my.sharepoint.com/:x:/g/personal/jonathan_white26_nhs_net/EX07mIrBOk1AhamM_x4K5xQBjo-D43tUJQ7f0pQWRkQKEw?e=SXQade'
+
     df = pd.read_csv(file_path)
     df['Planned'] = pd.to_timedelta(df['Planned'], errors='coerce').dt.total_seconds() / 60  # Convert time to minutes
     df['Month'] = pd.to_datetime('01-' + df['Month'], format='%d-%b-%y', errors='coerce')  # Force first of month
