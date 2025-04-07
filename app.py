@@ -34,16 +34,28 @@ import streamlit as st  # For building interactive web apps
 st.set_page_config(layout="wide")
 
 # -------------------------
-# Load daily average input data
+# Load data from Excel workbook (SharePoint-hosted)
 # -------------------------
 @st.cache_data
-def load_data():
-    import os
-    file_path = 'https://nhs-my.sharepoint.com/personal/jonathan_white26_nhs_net/_layouts/15/download.aspx?SourceUrl=https://nhs-my.sharepoint.com/personal/jonathan_white26_nhs_net/Documents/AmbHandDailyAvgInput.csv'
-    df = pd.read_csv(file_path)  # Load daily averages
-    df.replace([np.inf, -np.inf], np.nan, inplace=True)  # Replace any infinities with NaN
-    df.dropna(inplace=True)  # Drop rows with missing values
-    return df
+def load_excel_data():
+    file_path = 'https://nhs-my.sharepoint.com/personal/jonathan_white26_nhs_net/_layouts/15/download.aspx?SourceUrl=https://nhs-my.sharepoint.com/personal/jonathan_white26_nhs_net/Documents/AmbulanceModelData.xlsx'
+    xls = pd.ExcelFile(file_path)
+
+    df = xls.parse('DailyInput')
+    df.replace([np.inf, -np.inf], np.nan, inplace=True)
+    df.dropna(inplace=True)
+
+    plan_df = xls.parse('PlanData')
+    plan_df['Planned'] = pd.to_timedelta(plan_df['Planned'], errors='coerce').dt.total_seconds() / 60
+    plan_df['Month'] = pd.to_datetime('01-' + plan_df['Month'], format='%d-%b-%y', errors='coerce')
+    initial_rows = len(plan_df)
+    plan_df.dropna(subset=['Month'], inplace=True)
+    if len(plan_df) < initial_rows:
+        st.warning(f"Dropped {initial_rows - len(plan_df)} rows with invalid month format.")
+    plan_df.sort_values('Month', inplace=True)
+    plan_df['MonthStr'] = plan_df['Month'].dt.strftime('%b %Y')
+
+    return df, plan_df
 
 # -------------------------
 # Load monthly plan data and preprocess
@@ -66,8 +78,7 @@ def load_plan_data():
 # -------------------------
 # Load both datasets and define target/feature columns
 # -------------------------
-df = load_data()
-plan_df = load_plan_data()
+df, plan_df = load_excel_data()
 y = df.iloc[:, 1]  # Target variable (handover time)
 all_features = df.columns[2:16]  # Independent variables to allow selection
 
