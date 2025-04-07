@@ -39,7 +39,7 @@ st.set_page_config(layout="wide")
 @st.cache_data
 def load_data():
     import os
-    file_path = 'https://nhs-my.sharepoint.com/:x:/g/personal/jonathan_white26_nhs_net/ERCme8JThsxJs05_FjICfDsBV-poQLcFzteeEM6seJwi8w?e=cZKO87'
+    file_path = 'https://nhs-my.sharepoint.com/personal/jonathan_white26_nhs_net/_layouts/15/download.aspx?SourceUrl=https://nhs-my.sharepoint.com/personal/jonathan_white26_nhs_net/Documents/AmbHandDailyAvgInput.csv'
     df = pd.read_csv(file_path)  # Load daily averages
     df.replace([np.inf, -np.inf], np.nan, inplace=True)  # Replace any infinities with NaN
     df.dropna(inplace=True)  # Drop rows with missing values
@@ -51,7 +51,7 @@ def load_data():
 @st.cache_data
 def load_plan_data():
     import os
-    file_path = 'https://nhs-my.sharepoint.com/:x:/g/personal/jonathan_white26_nhs_net/ESiwQQu-6epMv3qSsO3BJtYB3ccDEzV6tNrokt5L-q8w_A?e=WvBpVr'
+    file_path = 'https://nhs-my.sharepoint.com/personal/jonathan_white26_nhs_net/_layouts/15/download.aspx?SourceUrl=https://nhs-my.sharepoint.com/personal/jonathan_white26_nhs_net/Documents/AmbHandPlan.csv'
     df = pd.read_csv(file_path)
     df['Planned'] = pd.to_timedelta(df['Planned'], errors='coerce').dt.total_seconds() / 60  # Convert time to minutes
     df['Month'] = pd.to_datetime('01-' + df['Month'], format='%d-%b-%y', errors='coerce')  # Force first of month
