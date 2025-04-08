@@ -34,29 +34,16 @@ import streamlit as st  # For building interactive web apps
 st.set_page_config(layout="wide")
 
 # -------------------------
-# Load data from Excel workbook (SharePoint-hosted)
+# Load daily average input data
 # -------------------------
 @st.cache_data
-def load_excel_data():
-    file_path = 'https://nhs-my.sharepoint.com/:x:/g/personal/jonathan_white26_nhs_net/EX07mIrBOk1AhamM_x4K5xQBjo-D43tUJQ7f0pQWRkQKEw?e=SXQade'
-
-    xls = pd.ExcelFile(file_path)
-
-    df = xls.parse('DailyInput')
-    df.replace([np.inf, -np.inf], np.nan, inplace=True)
-    df.dropna(inplace=True)
-
-    plan_df = xls.parse('PlanData')
-    plan_df['Planned'] = pd.to_timedelta(plan_df['Planned'], errors='coerce').dt.total_seconds() / 60
-    plan_df['Month'] = pd.to_datetime('01-' + plan_df['Month'], format='%d-%b-%y', errors='coerce')
-    initial_rows = len(plan_df)
-    plan_df.dropna(subset=['Month'], inplace=True)
-    if len(plan_df) < initial_rows:
-        st.warning(f"Dropped {initial_rows - len(plan_df)} rows with invalid month format.")
-    plan_df.sort_values('Month', inplace=True)
-    plan_df['MonthStr'] = plan_df['Month'].dt.strftime('%b %Y')
-
-    return df, plan_df
+def load_data():
+    import os
+    file_path = r'AmbHandDailyAvgInput.csv'
+    df = pd.read_csv(file_path)  # Load daily averages
+    df.replace([np.inf, -np.inf], np.nan, inplace=True)  # Replace any infinities with NaN
+    df.dropna(inplace=True)  # Drop rows with missing values
+    return df
 
 # -------------------------
 # Load monthly plan data and preprocess
@@ -64,8 +51,7 @@ def load_excel_data():
 @st.cache_data
 def load_plan_data():
     import os
-    file_path = 'https://nhs-my.sharepoint.com/:x:/g/personal/jonathan_white26_nhs_net/EX07mIrBOk1AhamM_x4K5xQBjo-D43tUJQ7f0pQWRkQKEw?e=SXQade'
-
+    file_path = r'AmbHandPlan.csv'
     df = pd.read_csv(file_path)
     df['Planned'] = pd.to_timedelta(df['Planned'], errors='coerce').dt.total_seconds() / 60  # Convert time to minutes
     df['Month'] = pd.to_datetime('01-' + df['Month'], format='%d-%b-%y', errors='coerce')  # Force first of month
@@ -80,7 +66,8 @@ def load_plan_data():
 # -------------------------
 # Load both datasets and define target/feature columns
 # -------------------------
-df, plan_df = load_excel_data()
+df = load_data()
+plan_df = load_plan_data()
 y = df.iloc[:, 1]  # Target variable (handover time)
 all_features = df.columns[2:16]  # Independent variables to allow selection
 
