@@ -16,17 +16,16 @@ st.set_page_config(layout="wide")
 # -------------------------
 # Hardcoded model parameters from trained regression
 # -------------------------
-model_intercept = -327.09
+# Updated model parameters from the new OLS regression results
+model_intercept = -280.1827
 model_coefficients = {
-    '% Patients Not Meeting Criteria to Reside - Adult': 5.63,
-    'Unvalidated 4hr % Performance (Since Midnight) - ED All-Type': -0.78,
-    '% Open beds that are escalation beds': 11.59,
-    'CFT - Virtual Ward % Occupancy': 0.17,
-    'SWAST - % See & Treat Rates (Since Midnight) - Cornwall': 0.09,
-    'SWAST - Ambulance Conveyances (Rolling 60 mins) - Royal Cornwall Hospital Treliske (RCH)': -13.94,
-    'SWAST - % Hear & Treat Rates (Since Midnight) - Cornwall': 1.59,
-    'Acute OPEL Score 24/26 ': 2.85,
-    'Total Patients delayed in CHAOS (previous day)': 4.55
+    '% Patients Not Meeting Criteria to Reside - Adult': 6.8585,
+    'Unvalidated 4hr % Performance (Since Midnight) - ED All-Type': -0.8295,
+    '% Open beds that are escalation beds': 22.8535,
+    'CFT - Virtual Ward % Occupancy': -0.2681,
+    'SWAST - Ambulance Conveyances (Rolling 60 mins) - Royal Cornwall Hospital Treliske (RCH)': -17.1076,
+    'Acute OPEL Score 24/26': 2.9249,
+    'Total Patients delayed in CHAOS (previous day)': 4.9386
 }
 
 # -------------------------
@@ -37,10 +36,8 @@ default_values = {
     'Unvalidated 4hr % Performance (Since Midnight) - ED All-Type': 43.39,
     '% Open beds that are escalation beds': 1.52,
     'CFT - Virtual Ward % Occupancy': 46.36,
-    'SWAST - % See & Treat Rates (Since Midnight) - Cornwall': 37.65,
     'SWAST - Ambulance Conveyances (Rolling 60 mins) - Royal Cornwall Hospital Treliske (RCH)': 4.84,
-    'SWAST - % Hear & Treat Rates (Since Midnight) - Cornwall': 25.59,
-    'Acute OPEL Score 24/26 ': 68.36,
+    'Acute OPEL Score 24/26': 68.36,  # Fixed key
     'Total Patients delayed in CHAOS (previous day)': 31.02
 }
 
@@ -115,13 +112,36 @@ diff = revised_annual - actual_annual
 percent_diff = (diff / actual_annual) * 100
 color = 'red' if revised_annual > 45 else 'green'
 
+# Define selected_features to resolve the undefined variable error
+selected_features = list(model_coefficients.keys())  # Default to all features if not explicitly defined
+
 # -------------------------
 # Annual Results Display
 # -------------------------
 st.header("\U0001F4C5 Annual Plan Adjustment")
+changes = []
+for col in selected_features:
+    original = default_values[col]
+    new = input_values[col]
+    if not np.isclose(original, new):
+        delta_pct = ((new - original) / original) * 100 if original != 0 else 0
+        direction = "increased" if delta_pct > 0 else "decreased"
+        changes.append(f"**{col}** is {direction} by {abs(delta_pct):.1f}%")
+
+if changes:
+    sentence = " and ".join(changes)
+    st.markdown(f"📝 If {sentence}, then the historic data shows that the plan for ambulance handover delays could change to:")
+plan_df['Revised'] = plan_df['Planned'] * (1 + percent_change / 100)
+actual_annual = plan_df['Planned'].mean()
+revised_annual = plan_df['Revised'].mean()
+diff = revised_annual - actual_annual
+percent_diff = (diff / actual_annual) * 100
+color = 'red' if revised_annual > 45 else 'green'
+
 st.markdown(f"<h1 style='color:{color}; font-size: 40px'>Modelled Annual Average: {revised_annual:.2f} mins</h1>", unsafe_allow_html=True)
 st.markdown(f"<h4>Original Annual Average: {actual_annual:.2f} mins</h4>", unsafe_allow_html=True)
 st.markdown(f"<h4>Difference: {diff:+.2f} mins ({percent_diff:+.2f}%)</h4>", unsafe_allow_html=True)
+
 
 # -------------------------
 # Monthly Chart
@@ -175,7 +195,7 @@ A high F-statistic and a low p-value suggest the model performs better than one 
 # -------------------------
 st.header("Actual vs Predicted Handover Time (Training Fit)")
 actual_values = [25.385, 50.71375, 69.944583, 95.596667, 26.795, 93.3275, 73.643333, 47.859167, 72.92375, 44.2575, 70.52125, 76.6225, 43.678333, 32.06375, 57.524167, 43.84125, 58.7725, 104.182083, 53.187917, 35.180417, 103.805417, 47.912917, 47.6375, 101.281667, 157.709167, 146.6175, 60.980417, 146.986667, 162.4525, 175.065833, 166.785417, 134.488333, 132.245417, 93.98, 22.925, 31.80125, 49.36625, 107.099583, 172.871667, 122.657083, 104.5175, 119.026667, 37.666957, 29.457083]
-predicted_values = [35.848741, 50.853888, 59.611031, 76.499906, 29.832214, 105.780797, 83.81047, 53.664971, 77.566727, 51.786101, 110.99162, 79.990056, 59.787237, 50.951832, 45.47478, 73.762017, 18.569187, 43.484834, 27.836825, 55.388915, 120.001587, 75.869257, 71.398121, 99.160777, 128.644495, 112.740819, 90.353313, 143.074406, 105.176488, 141.863823, 147.900614, 138.696086, 169.038276, 115.691829, 51.645115, 27.262886, 60.437064, 88.30875, 145.261072, 130.326275, 107.944041, 82.384646, 67.931352, 38.754967]
+predicted_values = [30.74048, 49.116674, 65.586539, 70.617874, 20.289197, 94.32614, 94.235091, 52.396262, 79.511123, 66.532588, 105.670629, 73.353536, 55.073084, 50.249839, 49.83029, 74.20871, 36.230563, 38.282879, 24.963231, 48.278169, 129.874598, 94.745774, 68.575051, 90.080644, 110.687879, 102.083319, 104.692678, 138.224234, 120.743483, 133.759486, 159.995805, 132.006272, 158.123697, 116.178954, 55.479407, 41.171656, 70.349553, 96.396319, 141.1797, 134.532264, 86.845305, 83.390355, 72.246323, 30.502556]
 training_df = pd.DataFrame({"Index": range(len(actual_values)), "Actual": actual_values, "Predicted": predicted_values})
 fig_fit, ax_fit = plt.subplots(figsize=(8, 3))
 ax_fit.plot(training_df['Index'], training_df['Actual'], label='Actual')
