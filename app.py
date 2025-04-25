@@ -75,7 +75,7 @@ for idx, (var, coef) in enumerate(positive_features.items()):
         slider_val = st.slider(
             label=f"{var} (β={coef:+.2f})",
             min_value=initial_val * 0.5,
-            max_value=initial_val * 1.5,
+            max_value=initial_val * 2,
             value=initial_val,
             key=f"pos_{var}"
         )
@@ -89,7 +89,7 @@ for idx, (var, coef) in enumerate(negative_features.items()):
         slider_val = st.slider(
             label=f"{var} (β={coef:+.2f})",
             min_value=initial_val * 0.5,
-            max_value=initial_val * 1.5,
+            max_value=initial_val * 2,
             value=initial_val,
             key=f"neg_{var}"
         )
